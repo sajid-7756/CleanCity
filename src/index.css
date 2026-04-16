@@ -1,0 +1,154 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes: mytheme --default, dark --prefersdark;
+}
+@plugin "daisyui/theme" {
+  name: "mytheme";
+  default: true;
+  prefersdark: true;
+  color-scheme: light;
+
+  /* Brand Emerald/Slate/Mint */
+  --color-primary: oklch(65% 0.2 155); /* Emerald Green */
+  --color-primary-content: oklch(98% 0.01 155);
+
+  --color-secondary: oklch(35% 0.05 240); /* Slate Blue/Gray */
+  --color-secondary-content: oklch(98% 0.01 240);
+
+  --color-accent: oklch(85% 0.15 165); /* Fresh Mint */
+  --color-accent-content: oklch(25% 0.05 165);
+
+  --color-neutral: oklch(25% 0.02 240);
+  --color-neutral-content: oklch(95% 0.01 240);
+
+  --color-base-100: oklch(98% 0.01 240);
+  --color-base-200: oklch(95% 0.02 240);
+  --color-base-300: oklch(90% 0.03 240);
+
+  /* Status colors */
+  --color-info: oklch(70% 0.15 210);
+  --color-success: oklch(75% 0.2 145);
+  --color-warning: oklch(85% 0.2 85);
+  --color-error: oklch(65% 0.2 25);
+
+  --radius-selector: 0.75rem;
+  --radius-field: 0.5rem;
+  --radius-box: 1rem;
+}
+
+@plugin "daisyui/theme" {
+  name: "dark";
+  color-scheme: dark;
+
+  /* Dark mode variants */
+  --color-primary: oklch(70% 0.18 155);
+  --color-primary-content: oklch(15% 0.05 155);
+
+  --color-secondary: oklch(85% 0.05 240);
+  --color-secondary-content: oklch(15% 0.05 240);
+
+  --color-accent: oklch(80% 0.15 165);
+  --color-accent-content: oklch(20% 0.05 165);
+
+  --color-neutral: oklch(15% 0.02 240);
+  --color-neutral-content: oklch(90% 0.01 240);
+
+  --color-base-100: oklch(20% 0.02 240);
+  --color-base-200: oklch(15% 0.02 240);
+  --color-base-300: oklch(10% 0.02 240);
+}
+
+
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+#root {
+  font-family: "Inter", sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+}
+a {
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+/* Hover effect */
+a:hover {
+  color: #10b981;
+}
+
+a.active {
+  color: #10b981; 
+  font-weight: bold;
+  border-bottom: 2px solid #10b981;
+}
+
+.swiper-button-next,
+.swiper-button-prev {
+  color: hsl(var(--pc));
+  background: hsl(var(--b1));
+  padding: 0.75rem;
+  border-radius: 9999px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+.swiper-button-next:hover,
+.swiper-button-prev:hover {
+  color: hsl(var(--pc));
+  background: hsl(var(--p));
+}
+
+.rdg {
+  --rdg-color: #000;
+  --rdg-background-color: #fff;
+  --rdg-header-background-color: #f1f1f1;
+  --rdg-border-color: #ccc;
+  --rdg-row-hover-background-color: #e8f5e9;
+}
+
+.rdg .rdg-row:hover {
+  transition: background-color 0.2s ease-in-out;
+}
+
+@keyframes gradient {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient 5s ease infinite;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.8s ease-out;
+}
+
+@keyframes pulse-slow {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s ease-in-out infinite;
+}
