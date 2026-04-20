@@ -9,6 +9,8 @@ import Loading from "../Components/Loading";
 import useAxiosSecure from "../Hooks/useAxiosSecure";
 import { AuthContext } from "../Provider/AuthContext";
 import type { Issue } from "../types/entities";
+import useRole from "../Hooks/useRole";
+import { Navigate } from "react-router";
 
 const emptyIssue: Issue = {
   _id: "",
@@ -29,6 +31,7 @@ const MyIssues = () => {
   const [selectedIssue, setSelectedIssue] = useState<Issue>(emptyIssue);
   const issueModalRef = useRef<HTMLDialogElement | null>(null);
   const [loading, setLoading] = useState(true);
+  const [role, isRoleLoading] = useRole();
 
   const issueId = selectedIssue._id;
 
@@ -105,8 +108,12 @@ const MyIssues = () => {
 
   const reversed = [...myIssues].reverse();
 
-  if (loading) {
+  if (loading || isRoleLoading) {
     return <Loading />;
+  }
+
+  if (role === "admin") {
+    return <Navigate to="/dashboard" />;
   }
 
   return (

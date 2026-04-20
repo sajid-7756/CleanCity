@@ -1,5 +1,5 @@
-import { useContext } from "react";
-import type { FormEvent } from "react";
+import { useContext, useEffect, useState } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 import toast from "react-hot-toast";
 import { Fade } from "react-awesome-reveal";
 import Container from "../Components/Container";
@@ -7,33 +7,116 @@ import NewIssueForm from "../Components/NewIssueForm";
 import useAxiosSecure from "../Hooks/useAxiosSecure";
 import { AuthContext } from "../Provider/AuthContext";
 
+import { Navigate } from "react-router";
+import useRole from "../Hooks/useRole";
+
 const AddIssue = () => {
   const authContext = useContext(AuthContext);
   const axiosSecure = useAxiosSecure();
+  const [role, isRoleLoading] = useRole();
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
+  const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] || null;
+    setSelectedImageFile(file);
+
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+
+    if (file) {
+      setPreviewUrl(URL.createObjectURL(file));
+      return;
+    }
+
+    setPreviewUrl(null);
+  };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    if (!selectedImageFile) {
+      toast.error("Please choose an image file before submitting.");
+      return;
+    }
+
     const form = event.currentTarget;
     const formData = new FormData(form);
+    setIsUploading(true);
 
-    const newIssue = {
-      title: String(formData.get("title") ?? ""),
-      category: String(formData.get("category") ?? ""),
-      location: String(formData.get("location") ?? ""),
-      description: String(formData.get("description") ?? ""),
-      image: String(formData.get("image") ?? ""),
-      amount: Number(formData.get("amount") ?? 0),
-      status: String(formData.get("status") ?? "Ongoing"),
-      email: authContext?.user?.email,
-      date: new Date().toLocaleDateString(),
-    };
+    axiosSecure
+      .get("/cloudinary/signature")
+      .then((signatureResponse) => {
+        const { cloudName, apiKey, folder, timestamp, signature } = signatureResponse.data;
+        const uploadFormData = new FormData();
 
-    axiosSecure.post("/issues", newIssue).then(() => {
-      toast.success("Successfully added");
-      form.reset();
-    });
+        uploadFormData.append("file", selectedImageFile);
+        uploadFormData.append("api_key", apiKey);
+        uploadFormData.append("timestamp", String(timestamp));
+        uploadFormData.append("signature", signature);
+        uploadFormData.append("folder", folder);
+
+        return fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+          method: "POST",
+          body: uploadFormData,
+        });
+      })
+      .then(async (uploadResponse) => {
+        if (!uploadResponse.ok) {
+          throw new Error("Image upload failed");
+        }
+
+        const uploadData = await uploadResponse.json();
+
+        const newIssue = {
+          title: String(formData.get("title") ?? ""),
+          category: String(formData.get("category") ?? ""),
+          location: String(formData.get("location") ?? ""),
+          description: String(formData.get("description") ?? ""),
+          image: String(uploadData.secure_url ?? ""),
+          amount: Number(formData.get("amount") ?? 0),
+          status: String(formData.get("status") ?? "Ongoing"),
+          email: authContext?.user?.email,
+          date: new Date().toLocaleDateString(),
+        };
+
+        return axiosSecure.post("/issues", newIssue);
+      })
+      .then(() => {
+        toast.success("Issue added successfully");
+        form.reset();
+        setSelectedImageFile(null);
+        if (previewUrl) {
+          URL.revokeObjectURL(previewUrl);
+        }
+        setPreviewUrl(null);
+      })
+      .catch((error) => {
+        console.error(error);
+        toast.error("Could not upload the image. Please try again.");
+      })
+      .finally(() => {
+        setIsUploading(false);
+      });
   };
+
+  if (isRoleLoading) {
+    return null;
+  }
+
+  if (role === "admin") {
+    return <Navigate to="/dashboard" />;
+  }
 
   return (
     <Fade>
@@ -49,7 +132,14 @@ const AddIssue = () => {
           </p>
         </div>
 
-        <NewIssueForm handleSubmit={handleSubmit} user={authContext?.user ?? null} />
+        <NewIssueForm
+          handleSubmit={handleSubmit}
+          user={authContext?.user ?? null}
+          isUploading={isUploading}
+          selectedFileName={selectedImageFile?.name || ""}
+          previewUrl={previewUrl}
+          onImageChange={handleImageChange}
+        />
       </Container>
     </Fade>
   );

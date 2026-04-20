@@ -1,12 +1,23 @@
-import type { FormEventHandler } from "react";
+import type { ChangeEvent, FormEventHandler } from "react";
 import type { User } from "firebase/auth";
 
 interface NewIssueFormProps {
   handleSubmit: FormEventHandler<HTMLFormElement>;
   user: User | null;
+  isUploading: boolean;
+  selectedFileName: string;
+  previewUrl: string | null;
+  onImageChange: (event: ChangeEvent<HTMLInputElement>) => void;
 }
 
-const NewIssueForm = ({ handleSubmit, user }: NewIssueFormProps) => {
+const NewIssueForm = ({
+  handleSubmit,
+  user,
+  isUploading,
+  selectedFileName,
+  previewUrl,
+  onImageChange,
+}: NewIssueFormProps) => {
   return (
     <div className="card mx-auto max-w-4xl overflow-hidden rounded-[3rem] border border-base-200 bg-base-100 shadow-sm">
       <div className="card-body p-8 md:p-12">
@@ -54,15 +65,42 @@ const NewIssueForm = ({ handleSubmit, user }: NewIssueFormProps) => {
 
           <div className="form-control md:col-span-2">
             <label className="label">
-              <span className="label-text font-bold">Image URL</span>
+              <span className="label-text font-bold">Issue Image</span>
             </label>
-            <input
-              type="text"
-              name="image"
-              placeholder="https://images.unsplash.com/..."
-              className="input input-bordered input-lg w-full rounded-2xl border-transparent bg-base-200/50 font-medium transition-all focus:input-primary focus:bg-base-100"
-              required
-            />
+            <input type="hidden" name="image" value={selectedFileName} readOnly />
+            <label className="flex min-h-[11rem] cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-primary/20 bg-base-200/40 p-6 text-center transition-all hover:border-primary/40 hover:bg-base-200/60">
+              <span className="text-lg font-bold text-secondary">
+                {selectedFileName ? "Change selected image" : "Choose an image from your device"}
+              </span>
+              <span className="text-sm text-base-content/60">
+                JPG, PNG, or WEBP files work best for issue reports.
+              </span>
+              <span className="rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-content">
+                Browse Files
+              </span>
+              <input
+                type="file"
+                name="issueImage"
+                accept="image/*"
+                className="hidden"
+                onChange={onImageChange}
+                required
+              />
+            </label>
+            <div className="mt-4 space-y-2">
+              <p className="text-sm font-medium text-base-content/70">
+                {selectedFileName || "No file selected yet"}
+              </p>
+              {previewUrl ? (
+                <div className="overflow-hidden rounded-2xl border border-base-200">
+                  <img
+                    src={previewUrl}
+                    alt="Issue preview"
+                    className="h-56 w-full object-cover"
+                  />
+                </div>
+              ) : null}
+            </div>
           </div>
 
           <div className="form-control md:col-span-2">
@@ -132,10 +170,13 @@ const NewIssueForm = ({ handleSubmit, user }: NewIssueFormProps) => {
           <div className="pt-6 md:col-span-2">
             <button
               type="submit"
+              disabled={isUploading}
               className="btn btn-primary btn-lg group w-full rounded-2xl font-black tracking-tight shadow-xl shadow-primary/20"
             >
-              Submit Issue Report
-              <span className="transition-transform group-hover:translate-x-1">→</span>
+              {isUploading ? "Uploading image..." : "Submit Issue Report"}
+              <span className="transition-transform group-hover:translate-x-1">
+                {isUploading ? "..." : "→"}
+              </span>
             </button>
           </div>
         </form>

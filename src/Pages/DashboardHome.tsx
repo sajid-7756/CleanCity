@@ -18,34 +18,34 @@ import {
   YAxis,
 } from "recharts";
 import Loading from "../Components/Loading";
-import useAxios from "../Hooks/useAxios";
+import useAxiosSecure from "../Hooks/useAxiosSecure";
 import type { Issue } from "../types/entities";
-
-const data = [
-  { name: "Jan", issues: 400, resolved: 240 },
-  { name: "Feb", issues: 300, resolved: 139 },
-  { name: "Mar", issues: 200, resolved: 980 },
-  { name: "Apr", issues: 278, resolved: 390 },
-  { name: "May", issues: 189, resolved: 480 },
-  { name: "Jun", issues: 239, resolved: 380 },
-];
-
-const pieData = [
-  { name: "Resolved", value: 400 },
-  { name: "Pending", value: 300 },
-  { name: "In Progress", value: 300 },
-];
+import useRole from "../Hooks/useRole";
+import toast from "react-hot-toast";
 
 const COLORS = ["#10b981", "#f59e0b", "#3b82f6"];
 
 const DashboardHome = () => {
   const [issues, setIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(false);
-  const axiosInstance = useAxios();
+  const axiosSecure = useAxiosSecure();
+  const [role] = useRole();
+
+  const handleEditStatus = async (issue: Issue) => {
+    const newStatus = issue.status === "ongoing" ? "ended" : "ongoing";
+    try {
+      await axiosSecure.patch(`/issues/${issue._id}`, { status: newStatus });
+      setIssues(issues.map(i => i._id === issue._id ? { ...i, status: newStatus } : i));
+      toast.success(`Issue status updated to ${newStatus}.`);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update status.");
+    }
+  };
 
   useEffect(() => {
     setLoading(true);
-    axiosInstance
+    axiosSecure
       .get<Issue[]>("/issues")
       .then((res) => {
         setIssues(res.data);
@@ -55,10 +55,34 @@ const DashboardHome = () => {
         console.error(error);
         setLoading(false);
       });
-  }, [axiosInstance]);
+  }, [axiosSecure]);
 
   const pendingIssues = issues.filter((issue) => issue.status === "ongoing");
   const resolvedIssues = issues.filter((issue) => issue.status === "ended");
+
+  const pieData = [
+    { name: "Ended", value: resolvedIssues.length || 0 },
+    { name: "Ongoing", value: pendingIssues.length || 0 },
+  ].filter(i => i.value > 0);
+
+  const monthlyData = issues.reduce((acc, issue) => {
+    const date = new Date(issue.date);
+    if (isNaN(date.getTime())) return acc;
+    const month = date.toLocaleString('default', { month: 'short' });
+    if (!acc[month]) {
+      acc[month] = { name: month, issues: 0, resolved: 0 };
+    }
+    acc[month].issues += 1;
+    if (issue.status === "ended") {
+      acc[month].resolved += 1;
+    }
+    return acc;
+  }, {} as Record<string, { name: string; issues: number; resolved: number }>);
+
+  const data = Object.values(monthlyData);
+  if (data.length === 0) {
+    data.push({ name: "Current month", issues: 0, resolved: 0 });
+  }
 
   if (loading) {
     return <Loading />;
@@ -180,7 +204,7 @@ const DashboardHome = () => {
               Today's snapshot
             </p>
 
-            <div className="h-60 min-h-[240px] flex-1">
+            <div className="h-60 min-h-60 flex-1">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -231,27 +255,26 @@ const DashboardHome = () => {
                 <th className="text-xs font-black uppercase tracking-widest opacity-30">Issue</th>
                 <th className="text-xs font-black uppercase tracking-widest opacity-30">Location</th>
                 <th className="text-xs font-black uppercase tracking-widest opacity-30">Status</th>
-                <th className="text-xs font-black uppercase tracking-widest opacity-30">Points</th>
+                <th className="text-xs font-black uppercase tracking-widest opacity-30">Budget</th>
+                {role === "admin" && (
+                  <th className="text-xs font-black uppercase tracking-widest opacity-30">Admin Actions</th>
+                )}
               </tr>
             </thead>
             <tbody>
-              {[
-                { title: "Broken Street Light", loc: "Downtown", status: "Resolved", pts: "+50" },
-                { title: "Illegal Dumping", loc: "North Side", status: "In Progress", pts: "+100" },
-                { title: "Pipeline Leakage", loc: "West Park", status: "Pending", pts: "+25" },
-              ].map((item) => (
+              {[...issues].reverse().map((item) => (
                 <tr
-                  key={item.title}
+                  key={item._id}
                   className="border-b border-base-200/50 transition-colors hover:bg-base-200/30"
                 >
                   <td className="py-4 font-bold text-secondary">{item.title}</td>
-                  <td className="text-base-content/60">{item.loc}</td>
+                  <td className="text-base-content/60">{item.location}</td>
                   <td>
                     <span
                       className={`badge badge-sm font-bold ${
-                        item.status === "Resolved"
+                        item.status === "ended"
                           ? "badge-success"
-                          : item.status === "Pending"
+                          : item.status === "ongoing"
                             ? "badge-warning"
                             : "badge-info"
                       }`}
@@ -259,7 +282,17 @@ const DashboardHome = () => {
                       {item.status}
                     </span>
                   </td>
-                  <td className="font-black text-primary">{item.pts}</td>
+                  <td className="font-black text-primary">${item.amount}</td>
+                  {role === "admin" && (
+                    <td>
+                      <button 
+                        onClick={() => handleEditStatus(item)}
+                        className="btn btn-xs btn-outline btn-primary"
+                      >
+                        Change Status
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
