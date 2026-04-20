@@ -7,7 +7,7 @@ Built with **React**, **TailwindCSS/DaisyUI**, and modern libraries, it provides
 
 ## 🔗 Live Link
 
-👉 [View CleanCity Live](https://a10-b11-issuereport-4c3a42.netlify.app/)
+👉 [View CleanCity Live](https://clean-city-cst-sigma.vercel.app/)
 
 👉 [Server](https://github.com/sajid-7756/Community-Cleanliness-Issue-Reporting-Portal-A10B11-server)
 
