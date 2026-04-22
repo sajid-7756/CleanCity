@@ -15,13 +15,13 @@ Built with **React**, **TailwindCSS/DaisyUI**, and modern libraries, it provides
 
 ## ✨ Features
 
-- 📊 **Community Stats** – Track registered users, resolved issues, and pending reports.
-- 🗂️ **Issue Reporting** – Submit complaints with category, location, and description.
+- 🎭 **Role-Based System** – Distinct dashboards and workflows for Citizens, Cleaners, and Admins.
+- 💰 **Proof-Based Bounty System** – Cleaners can submit photographic proof of cleaned areas to earn rewards based on issue severity.
+- 🛡️ **Admin Moderation Tools** – Dedicated admin page to manage issue proofs, edit budgets, delete issues, and provide rejection feedback.
+- 🖼️ **Cloudinary Integration** – Secure image uploads for issue reporting, proof submission, and user registration avatars.
+- 📊 **Personal & Community Stats** – Dashboards for users to track their reported issues, cleaning contributions, and overall community progress.
 - 🎨 **Theme-Aware UI** – Light/Dark mode support with accessible palettes.
-- 🖼️ **Interactive Cards** – Animated complaint cards with hover effects.
-- 📑 **Data Table** – Contributions displayed in a sortable grid with PDF export.
-- 👥 **Volunteer CTA** – Join clean drives and community initiatives.
-- 🔐 **Authentication** – Sign in / Register with password visibility toggle.
+- 🔐 **Authentication** – Secure sign in and registration.
 
 ---
 

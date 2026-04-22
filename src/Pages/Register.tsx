@@ -1,9 +1,10 @@
-import { useContext, useState } from "react";
-import type { FormEvent } from "react";
+import { useContext, useEffect, useState } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 import { Link, Navigate, useNavigate } from "react-router";
 import toast from "react-hot-toast";
 import { Fade } from "react-awesome-reveal";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { FiUploadCloud } from "react-icons/fi";
 import { AuthContext } from "../Provider/AuthContext";
 import useAxios from "../Hooks/useAxios";
 
@@ -12,15 +13,65 @@ const Register = () => {
   const authContext = useContext(AuthContext);
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
-  const handleSignUp = (event: FormEvent<HTMLFormElement>) => {
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
+  const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] || null;
+    setSelectedImageFile(file);
+
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+
+    if (file) {
+      setPreviewUrl(URL.createObjectURL(file));
+      return;
+    }
+
+    setPreviewUrl(null);
+  };
+
+  const uploadToCloudinary = async (file: File): Promise<string> => {
+    const sigRes = await axiosInstance.get("/cloudinary/signature/public");
+    const { cloudName, apiKey, folder, timestamp, signature } = sigRes.data;
+
+    const uploadFormData = new FormData();
+    uploadFormData.append("file", file);
+    uploadFormData.append("api_key", apiKey);
+    uploadFormData.append("timestamp", String(timestamp));
+    uploadFormData.append("signature", signature);
+    uploadFormData.append("folder", folder);
+
+    const uploadRes = await fetch(
+      `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+      { method: "POST", body: uploadFormData }
+    );
+
+    if (!uploadRes.ok) {
+      throw new Error("Image upload failed");
+    }
+
+    const uploadData = await uploadRes.json();
+    return uploadData.secure_url;
+  };
+
+  const handleSignUp = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = event.currentTarget;
     const formData = new FormData(form);
     const displayName = String(formData.get("name") ?? "");
     const email = String(formData.get("email") ?? "");
     const password = String(formData.get("password") ?? "");
-    const photoURL = String(formData.get("photoURL") ?? "");
 
     const nameRegex = /^[a-zA-Z\s]{3,30}$/;
     const emailRegex = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/;
@@ -41,55 +92,54 @@ const Register = () => {
       );
     }
 
-    authContext?.signUpFunc(email, password)
-      .then(() => {
-        toast.success("Sign up success");
-        authContext?.updateProfileFunc(displayName, photoURL)
-          .then(() => {
-            const newUser = { name: displayName, email, image: photoURL };
+    if (!selectedImageFile) {
+      return toast.error("Please upload a profile photo.");
+    }
 
-            axiosInstance.post("/users", newUser).catch((error) => console.log(error));
+    setIsUploading(true);
 
-            authContext?.signOutFunc()
-              .then(() => {
-                authContext?.setUser(null);
-                navigate("/login");
-                authContext?.setLoading(false);
-              })
-              .catch((error: { message?: string }) => {
-                toast.error(error.message || "Sign out failed");
-              });
-          })
-          .catch((error: { message?: string }) => {
-            toast.error(error.message || "Profile update failed");
-          });
-      })
-      .catch((error: { code?: string; message?: string }) => {
-        if (error.code === "auth/email-already-in-use") {
-          toast.error("User already exists in the database.");
-        } else if (error.code === "auth/weak-password") {
-          toast.error("Password must be at least 6 characters long.");
-        } else if (error.code === "auth/invalid-email") {
-          toast.error("Invalid email format. Please check your email.");
-        } else if (error.code === "auth/user-not-found") {
-          toast.error("User not found. Please sign up first.");
-        } else if (error.code === "auth/wrong-password") {
-          toast.error("Wrong password. Please try again.");
-        } else if (error.code === "auth/user-disabled") {
-          toast.error("This user account has been disabled.");
-        } else if (error.code === "auth/too-many-requests") {
-          toast.error("Too many attempts. Please try again later.");
-        } else if (error.code === "auth/operation-not-allowed") {
-          toast.error("Operation not allowed. Please contact support.");
-        } else if (error.code === "auth/network-request-failed") {
-          toast.error("Network error. Please check your connection.");
-        } else {
-          toast.error(error.message || "An unexpected error occurred.");
-        }
-        authContext?.setLoading(false);
-      });
+    try {
+      const photoURL = await uploadToCloudinary(selectedImageFile);
 
-    form.reset();
+      await authContext?.signUpFunc(email, password);
+      toast.success("Sign up success");
+
+      await authContext?.updateProfileFunc(displayName, photoURL);
+
+      const newUser = { name: displayName, email, image: photoURL };
+      axiosInstance.post("/users", newUser).catch((error) => console.log(error));
+
+      await authContext?.signOutFunc();
+      authContext?.setUser(null);
+      navigate("/login");
+      authContext?.setLoading(false);
+    } catch (error: unknown) {
+      const err = error as { code?: string; message?: string };
+      if (err.code === "auth/email-already-in-use") {
+        toast.error("User already exists in the database.");
+      } else if (err.code === "auth/weak-password") {
+        toast.error("Password must be at least 6 characters long.");
+      } else if (err.code === "auth/invalid-email") {
+        toast.error("Invalid email format. Please check your email.");
+      } else if (err.code === "auth/user-not-found") {
+        toast.error("User not found. Please sign up first.");
+      } else if (err.code === "auth/wrong-password") {
+        toast.error("Wrong password. Please try again.");
+      } else if (err.code === "auth/user-disabled") {
+        toast.error("This user account has been disabled.");
+      } else if (err.code === "auth/too-many-requests") {
+        toast.error("Too many attempts. Please try again later.");
+      } else if (err.code === "auth/operation-not-allowed") {
+        toast.error("Operation not allowed. Please contact support.");
+      } else if (err.code === "auth/network-request-failed") {
+        toast.error("Network error. Please check your connection.");
+      } else {
+        toast.error(err.message || "An unexpected error occurred.");
+      }
+      authContext?.setLoading(false);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleGoogleSignIn = () => {
@@ -122,9 +172,9 @@ const Register = () => {
       <div className="absolute left-0 top-0 -ml-20 -mt-20 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
       <div className="absolute bottom-0 right-0 -mb-20 -mr-20 h-80 w-80 rounded-full bg-accent/10 blur-3xl" />
 
-      <Fade triggerOnce>
+      <Fade triggerOnce className="w-full max-w-xl">
         <title>CleanCity - Register</title>
-        <div className="relative z-10 w-full max-w-xl overflow-hidden rounded-3xl border border-base-300 bg-base-100 shadow-2xl">
+        <div className="relative z-10 w-full overflow-hidden rounded-3xl border border-base-300 bg-base-100 shadow-2xl">
           <div className="p-8 md:p-12">
             <div className="mb-10 text-center">
               <Link to="/" className="mb-4 inline-flex items-center gap-2 text-3xl font-bold">
@@ -145,7 +195,7 @@ const Register = () => {
                     type="text"
                     name="name"
                     placeholder="John Doe"
-                    className="input input-bordered input-lg rounded-2xl border-transparent bg-base-200/50 font-medium transition-all focus:input-primary focus:bg-base-100"
+                    className="input input-bordered input-lg w-full rounded-2xl border-transparent bg-base-200/50 font-medium transition-all focus:input-primary focus:bg-base-100"
                     required
                   />
                 </div>
@@ -155,21 +205,48 @@ const Register = () => {
                     type="email"
                     name="email"
                     placeholder="john@example.com"
-                    className="input input-bordered input-lg rounded-2xl border-transparent bg-base-200/50 font-medium transition-all focus:input-primary focus:bg-base-100"
+                    className="input input-bordered input-lg w-full rounded-2xl border-transparent bg-base-200/50 font-medium transition-all focus:input-primary focus:bg-base-100"
                     required
                   />
                 </div>
               </div>
 
+              {/* Profile Photo Upload */}
               <div className="form-control">
-                <label className="label"><span className="label-text font-bold">Photo URL</span></label>
-                <input
-                  type="text"
-                  name="photoURL"
-                  placeholder="https://example.com/photo.jpg"
-                  className="input input-bordered input-lg rounded-2xl border-transparent bg-base-200/50 font-medium transition-all focus:input-primary focus:bg-base-100"
-                  required
-                />
+                <label className="label"><span className="label-text font-bold">Profile Photo</span></label>
+                <div
+                  className="group relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-base-300 bg-base-200/30 p-6 transition-all hover:border-primary hover:bg-primary/5"
+                  onClick={() => document.getElementById("avatar-upload")?.click()}
+                >
+                  {previewUrl ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="relative h-24 w-24 overflow-hidden rounded-full ring-4 ring-primary/20">
+                        <img
+                          src={previewUrl}
+                          alt="Preview"
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <p className="text-sm font-medium text-base-content/70">
+                        {selectedImageFile?.name}
+                      </p>
+                      <p className="text-xs text-primary">Click to change</p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 text-base-content/50">
+                      <FiUploadCloud className="h-10 w-10 transition-transform group-hover:scale-110 group-hover:text-primary" />
+                      <p className="text-sm font-semibold">Click to upload your photo</p>
+                      <p className="text-xs">PNG, JPG, WEBP up to 5MB</p>
+                    </div>
+                  )}
+                  <input
+                    id="avatar-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageChange}
+                  />
+                </div>
               </div>
 
               <div className="form-control relative">
@@ -178,7 +255,7 @@ const Register = () => {
                   type={showPassword ? "text" : "password"}
                   name="password"
                   placeholder="••••••••"
-                  className="input input-bordered input-lg rounded-2xl border-transparent bg-base-200/50 font-medium transition-all focus:input-primary focus:bg-base-100"
+                  className="input input-bordered input-lg w-full rounded-2xl border-transparent bg-base-200/50 font-medium transition-all focus:input-primary focus:bg-base-100"
                   required
                 />
                 <button
@@ -190,8 +267,19 @@ const Register = () => {
                 </button>
               </div>
 
-              <button type="submit" className="btn btn-primary btn-lg w-full rounded-2xl font-bold tracking-tight shadow-xl shadow-primary/20">
-                Create Account
+              <button
+                type="submit"
+                disabled={isUploading}
+                className="btn btn-primary btn-lg w-full rounded-2xl font-bold tracking-tight shadow-xl shadow-primary/20 disabled:opacity-60"
+              >
+                {isUploading ? (
+                  <span className="flex items-center gap-2">
+                    <span className="loading loading-spinner loading-sm"></span>
+                    Uploading & Creating Account...
+                  </span>
+                ) : (
+                  "Create Account"
+                )}
               </button>
             </form>
 
