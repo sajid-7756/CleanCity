@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { ChangeEvent, FormEventHandler } from "react";
 import type { User } from "firebase/auth";
 
@@ -18,6 +19,7 @@ const NewIssueForm = ({
   previewUrl,
   onImageChange,
 }: NewIssueFormProps) => {
+  const [selectedLevel, setSelectedLevel] = useState<"Low" | "Medium" | "High">("Low");
   return (
     <div className="card mx-auto max-w-4xl overflow-hidden rounded-[3rem] border border-base-200 bg-base-100 shadow-sm">
       <div className="card-body p-8 md:p-12">
@@ -68,7 +70,7 @@ const NewIssueForm = ({
               <span className="label-text font-bold">Issue Image</span>
             </label>
             <input type="hidden" name="image" value={selectedFileName} readOnly />
-            <label className="flex min-h-[11rem] cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-primary/20 bg-base-200/40 p-6 text-center transition-all hover:border-primary/40 hover:bg-base-200/60">
+            <label className="flex min-h-44 cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-primary/20 bg-base-200/40 p-6 text-center transition-all hover:border-primary/40 hover:bg-base-200/60">
               <span className="text-lg font-bold text-secondary">
                 {selectedFileName ? "Change selected image" : "Choose an image from your device"}
               </span>
@@ -128,16 +130,51 @@ const NewIssueForm = ({
             />
           </div>
 
-          <div className="form-control">
+          <div className="form-control md:col-span-2">
             <label className="label">
-              <span className="label-text font-bold">Estimated Work Multiplier</span>
+              <span className="label-text font-bold">Garbage Level</span>
+              <span className="label-text-alt font-medium text-base-content/40">This determines the cleaner's reward</span>
             </label>
-            <input
-              type="number"
-              name="amount"
-              defaultValue={500}
-              className="input input-bordered input-lg w-full rounded-2xl border-transparent bg-base-200/50 font-medium transition-all focus:input-primary focus:bg-base-100"
-            />
+            <div className="grid grid-cols-3 gap-4">
+              {([
+                {
+                  value: "Low" as const,
+                  reward: 50,
+                  activeClass: "border-success bg-success/10 text-success",
+                },
+                {
+                  value: "Medium" as const,
+                  reward: 100,
+                  activeClass: "border-warning bg-warning/10 text-warning",
+                },
+                {
+                  value: "High" as const,
+                  reward: 200,
+                  activeClass: "border-error bg-error/10 text-error",
+                },
+              ]).map(({ value, reward, activeClass }) => (
+                <label key={value} className="cursor-pointer">
+                  <input
+                    type="radio"
+                    name="garbageLevel"
+                    value={value}
+                    checked={selectedLevel === value}
+                    onChange={() => setSelectedLevel(value)}
+                    className="sr-only"
+                  />
+                  <div
+                    className={`flex flex-col items-center justify-center gap-1 rounded-2xl border-2 p-4 transition-all ${
+                      selectedLevel === value
+                        ? activeClass
+                        : "border-base-200 bg-base-200/50"
+                    }`}
+                  >
+                    <span className="text-lg font-black">{value}</span>
+                    <span className="text-xs font-bold opacity-70">৳{reward} reward</span>
+                  </div>
+                </label>
+              ))}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-8 opacity-60 md:col-span-2 md:grid-cols-2">

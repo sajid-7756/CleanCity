@@ -60,7 +60,7 @@ const AllIssues = ({ issues }: AllIssuesProps) => {
 
   if (issues.length === 0) {
     return (
-      <div className="flex min-h-[25rem] items-center justify-center">
+      <div className="flex min-h-100 items-center justify-center">
         <div className="text-center text-5xl font-semibold text-warning">Issue Not Found</div>
       </div>
     );
@@ -75,7 +75,7 @@ const AllIssues = ({ issues }: AllIssuesProps) => {
           return (
             <article
               key={issue._id}
-              className="group overflow-hidden rounded-[2rem] border border-base-200 bg-base-100 shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl"
+              className="group overflow-hidden rounded-4xl border border-base-200 bg-base-100 shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl"
             >
               <div className={`bg-linear-to-r ${colorScheme.gradient} p-6 text-white`}>
                 <div className="flex items-center justify-between">

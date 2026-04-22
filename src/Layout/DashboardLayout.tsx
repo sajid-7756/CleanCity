@@ -2,7 +2,6 @@ import { useContext, useState } from "react";
 import type { ReactNode } from "react";
 import { Link, NavLink, Outlet, useNavigate } from "react-router";
 import {
-  Bell,
   ChevronRight,
   HandHeart,
   LayoutDashboard,
@@ -11,6 +10,7 @@ import {
   Menu,
   PlusCircle,
   UserCircle,
+  Wallet,
   X,
 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -66,12 +66,27 @@ const DashboardLayout = () => {
             path: "/dashboard/my-issues",
           },
         ]
-      : []),
+      : [
+          {
+            icon: <ListTodo size={20} />,
+            label: "All Contributions",
+            path: "/dashboard/admin-contributions",
+          },
+        ]),
     {
       icon: <HandHeart size={20} />,
       label: "My Contribution",
       path: "/dashboard/my-contribution",
     },
+    ...(role !== "admin"
+      ? [
+          {
+            icon: <Wallet size={20} />,
+            label: "Wallet",
+            path: "/dashboard/wallet",
+          },
+        ]
+      : []),
     { icon: <UserCircle size={20} />, label: "Profile", path: "/profile" },
   ];
 

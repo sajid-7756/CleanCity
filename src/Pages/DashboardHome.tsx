@@ -4,6 +4,7 @@ import {
   ArrowUpRight,
   CheckCircle2,
   Clock,
+  ShieldAlert,
 } from "lucide-react";
 import {
   Bar,
@@ -21,7 +22,6 @@ import Loading from "../Components/Loading";
 import useAxiosSecure from "../Hooks/useAxiosSecure";
 import type { Issue } from "../types/entities";
 import useRole from "../Hooks/useRole";
-import toast from "react-hot-toast";
 
 const COLORS = ["#10b981", "#f59e0b", "#3b82f6"];
 
@@ -30,18 +30,6 @@ const DashboardHome = () => {
   const [loading, setLoading] = useState(false);
   const axiosSecure = useAxiosSecure();
   const [role] = useRole();
-
-  const handleEditStatus = async (issue: Issue) => {
-    const newStatus = issue.status === "ongoing" ? "ended" : "ongoing";
-    try {
-      await axiosSecure.patch(`/issues/${issue._id}`, { status: newStatus });
-      setIssues(issues.map(i => i._id === issue._id ? { ...i, status: newStatus } : i));
-      toast.success(`Issue status updated to ${newStatus}.`);
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to update status.");
-    }
-  };
 
   useEffect(() => {
     setLoading(true);
@@ -58,26 +46,33 @@ const DashboardHome = () => {
   }, [axiosSecure]);
 
   const pendingIssues = issues.filter((issue) => issue.status === "ongoing");
+  const pendingReviewIssues = issues.filter(
+    (issue) => issue.status === "pending",
+  );
   const resolvedIssues = issues.filter((issue) => issue.status === "ended");
 
   const pieData = [
     { name: "Ended", value: resolvedIssues.length || 0 },
     { name: "Ongoing", value: pendingIssues.length || 0 },
-  ].filter(i => i.value > 0);
+    { name: "Pending Review", value: pendingReviewIssues.length || 0 },
+  ].filter((i) => i.value > 0);
 
-  const monthlyData = issues.reduce((acc, issue) => {
-    const date = new Date(issue.date);
-    if (isNaN(date.getTime())) return acc;
-    const month = date.toLocaleString('default', { month: 'short' });
-    if (!acc[month]) {
-      acc[month] = { name: month, issues: 0, resolved: 0 };
-    }
-    acc[month].issues += 1;
-    if (issue.status === "ended") {
-      acc[month].resolved += 1;
-    }
-    return acc;
-  }, {} as Record<string, { name: string; issues: number; resolved: number }>);
+  const monthlyData = issues.reduce(
+    (acc, issue) => {
+      const date = new Date(issue.date);
+      if (isNaN(date.getTime())) return acc;
+      const month = date.toLocaleString("default", { month: "short" });
+      if (!acc[month]) {
+        acc[month] = { name: month, issues: 0, resolved: 0 };
+      }
+      acc[month].issues += 1;
+      if (issue.status === "ended") {
+        acc[month].resolved += 1;
+      }
+      return acc;
+    },
+    {} as Record<string, { name: string; issues: number; resolved: number }>,
+  );
 
   const data = Object.values(monthlyData);
   if (data.length === 0) {
@@ -92,14 +87,31 @@ const DashboardHome = () => {
     <div className="animate-fade-in space-y-10">
       <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
         <div>
-          <h1 className="text-4xl font-black text-secondary">Dashboard Overview</h1>
+          <h1 className="text-4xl font-black text-secondary">
+            Dashboard Overview
+          </h1>
           <p className="mt-2 text-base-content/60">
             Welcome back! Here's what's happening in your community.
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {role === "admin" && pendingReviewIssues.length > 0 && (
+        <div className="flex items-center gap-4 rounded-2xl border border-error/30 bg-error/10 px-6 py-4">
+          <ShieldAlert className="shrink-0 text-error" size={24} />
+          <div>
+            <p className="font-black text-error">
+              {pendingReviewIssues.length} issue
+              {pendingReviewIssues.length > 1 ? "s" : ""} awaiting proof review!
+            </p>
+            <p className="text-sm text-error/70">
+              Scroll down to the issues table to review and approve or reject.
+            </p>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         {[
           {
             label: "Total Issues Reported",
@@ -116,7 +128,15 @@ const DashboardHome = () => {
             color: "bg-success/10",
           },
           {
-            label: "Pending Action",
+            label: "Pending Review",
+            value: pendingReviewIssues.length,
+            icon: <ShieldAlert className="text-error" />,
+            trend:
+              pendingReviewIssues.length > 0 ? "Action needed" : "All clear",
+            color: "bg-error/10",
+          },
+          {
+            label: "Ongoing",
             value: pendingIssues.length,
             icon: <Clock className="text-info" />,
             trend: "-5%",
@@ -152,7 +172,9 @@ const DashboardHome = () => {
         <div className="rounded-[3rem] border border-base-200 bg-base-100 p-8 shadow-sm lg:col-span-2">
           <div className="mb-8 flex items-center justify-between">
             <div>
-              <h3 className="text-2xl font-black text-secondary">Community Performance</h3>
+              <h3 className="text-2xl font-black text-secondary">
+                Community Performance
+              </h3>
               <p className="text-xs font-bold uppercase tracking-widest text-base-content/40">
                 Yearly comparisons
               </p>
@@ -168,8 +190,15 @@ const DashboardHome = () => {
           </div>
           <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+              <BarChart
+                data={data}
+                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke="#E2E8F0"
+                />
                 <XAxis
                   dataKey="name"
                   axisLine={false}
@@ -190,8 +219,16 @@ const DashboardHome = () => {
                     boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
                   }}
                 />
-                <Bar dataKey="issues" fill="oklch(65% 0.2 155)" radius={[10, 10, 0, 0]} />
-                <Bar dataKey="resolved" fill="oklch(35% 0.05 240)" radius={[10, 10, 0, 0]} />
+                <Bar
+                  dataKey="issues"
+                  fill="oklch(65% 0.2 155)"
+                  radius={[10, 10, 0, 0]}
+                />
+                <Bar
+                  dataKey="resolved"
+                  fill="oklch(35% 0.05 240)"
+                  radius={[10, 10, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -217,7 +254,10 @@ const DashboardHome = () => {
                     dataKey="value"
                   >
                     {pieData.map((entry, index) => (
-                      <Cell key={`${entry.name}-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell
+                        key={`${entry.name}-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
                     ))}
                   </Pie>
                   <Tooltip />
@@ -227,7 +267,10 @@ const DashboardHome = () => {
 
             <div className="mt-6 space-y-4">
               {pieData.map((item, index) => (
-                <div key={item.name} className="flex items-center justify-between text-sm">
+                <div
+                  key={item.name}
+                  className="flex items-center justify-between text-sm"
+                >
                   <div className="flex items-center gap-2">
                     <div
                       className="h-3 w-3 rounded-full"
@@ -243,62 +286,6 @@ const DashboardHome = () => {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-[3rem] border border-base-200 bg-base-100 p-8 shadow-sm">
-        <div className="mb-8 flex items-center justify-between">
-          <h3 className="text-2xl font-black text-secondary">Recent Contributions</h3>
-          <button className="btn btn-ghost btn-sm font-bold text-primary">View All</button>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="table">
-            <thead>
-              <tr className="border-b border-base-200">
-                <th className="text-xs font-black uppercase tracking-widest opacity-30">Issue</th>
-                <th className="text-xs font-black uppercase tracking-widest opacity-30">Location</th>
-                <th className="text-xs font-black uppercase tracking-widest opacity-30">Status</th>
-                <th className="text-xs font-black uppercase tracking-widest opacity-30">Budget</th>
-                {role === "admin" && (
-                  <th className="text-xs font-black uppercase tracking-widest opacity-30">Admin Actions</th>
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {[...issues].reverse().map((item) => (
-                <tr
-                  key={item._id}
-                  className="border-b border-base-200/50 transition-colors hover:bg-base-200/30"
-                >
-                  <td className="py-4 font-bold text-secondary">{item.title}</td>
-                  <td className="text-base-content/60">{item.location}</td>
-                  <td>
-                    <span
-                      className={`badge badge-sm font-bold ${
-                        item.status === "ended"
-                          ? "badge-success"
-                          : item.status === "ongoing"
-                            ? "badge-warning"
-                            : "badge-info"
-                      }`}
-                    >
-                      {item.status}
-                    </span>
-                  </td>
-                  <td className="font-black text-primary">${item.amount}</td>
-                  {role === "admin" && (
-                    <td>
-                      <button 
-                        onClick={() => handleEditStatus(item)}
-                        className="btn btn-xs btn-outline btn-primary"
-                      >
-                        Change Status
-                      </button>
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
     </div>
   );
 };

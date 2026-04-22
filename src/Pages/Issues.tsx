@@ -115,6 +115,7 @@ const Issues = () => {
               >
                 <option value="all">Any Status</option>
                 <option value="ongoing">Ongoing</option>
+                <option value="pending">Pending Review</option>
                 <option value="ended">Ended</option>
               </select>
             </div>
@@ -168,7 +169,7 @@ const Issues = () => {
 
                     <div className="absolute bottom-6 left-6">
                       <div className="rounded-2xl bg-primary p-3 px-5 text-xl font-black text-white shadow-2xl">
-                        ${issue.amount}
+                        ৳{issue.amount}
                       </div>
                     </div>
                   </div>

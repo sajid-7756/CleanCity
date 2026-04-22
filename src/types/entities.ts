@@ -6,6 +6,9 @@ export interface Issue {
   description: string;
   image: string;
   amount: number | string;
+  garbageLevel?: "Low" | "Medium" | "High";
+  proofImage?: string;
+  cleanedBy?: string;
   status: string;
   email?: string;
   date: string;

@@ -78,14 +78,19 @@ const AddIssue = () => {
 
         const uploadData = await uploadResponse.json();
 
+        const garbageLevel = String(formData.get("garbageLevel") ?? "Low") as "Low" | "Medium" | "High";
+        const levelAmountMap: Record<"Low" | "Medium" | "High", number> = { Low: 50, Medium: 100, High: 200 };
+        const amount = levelAmountMap[garbageLevel];
+
         const newIssue = {
           title: String(formData.get("title") ?? ""),
           category: String(formData.get("category") ?? ""),
           location: String(formData.get("location") ?? ""),
           description: String(formData.get("description") ?? ""),
           image: String(uploadData.secure_url ?? ""),
-          amount: Number(formData.get("amount") ?? 0),
-          status: String(formData.get("status") ?? "Ongoing"),
+          garbageLevel,
+          amount,
+          status: "ongoing",
           email: authContext?.user?.email,
           date: new Date().toLocaleDateString(),
         };
