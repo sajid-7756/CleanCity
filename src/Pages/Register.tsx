@@ -168,147 +168,150 @@ const Register = () => {
   }
 
   return (
-    <div className="relative flex min-h-[calc(100vh-80px)] items-center justify-center overflow-hidden bg-base-200/50 px-4 py-12">
-      <div className="absolute left-0 top-0 -ml-20 -mt-20 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
-      <div className="absolute bottom-0 right-0 -mb-20 -mr-20 h-80 w-80 rounded-full bg-accent/10 blur-3xl" />
+    <div className="relative isolate flex min-h-screen items-center justify-center overflow-hidden bg-base-200/50 px-4 py-8 sm:px-6 sm:py-12">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.14),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(110,231,183,0.18),transparent_30%)]" />
+      <div className="absolute left-0 top-0 -ml-20 -mt-20 h-64 w-64 rounded-full bg-primary/10 blur-3xl sm:h-80 sm:w-80" />
+      <div className="absolute bottom-0 right-0 -mb-20 -mr-20 h-64 w-64 rounded-full bg-accent/10 blur-3xl sm:h-80 sm:w-80" />
 
-      <Fade triggerOnce className="w-full max-w-xl">
-        <title>CleanCity - Register</title>
-        <div className="relative z-10 w-full overflow-hidden rounded-3xl border border-base-300 bg-base-100 shadow-2xl">
-          <div className="p-8 md:p-12">
-            <div className="mb-10 text-center">
-              <Link to="/" className="mb-4 inline-flex items-center gap-2 text-3xl font-bold">
-                <span className="rounded-lg bg-primary px-2 py-1 text-primary-content">Clean</span>
-                <span className="text-secondary">City</span>
-              </Link>
-              <h2 className="text-3xl font-black text-secondary">Create Account</h2>
-              <p className="mt-2 text-base-content/60">
-                Join our community and start making a difference.
-              </p>
-            </div>
-
-            <form onSubmit={handleSignUp} className="space-y-5">
-              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                <div className="form-control">
-                  <label className="label"><span className="label-text font-bold">Full Name</span></label>
-                  <input
-                    type="text"
-                    name="name"
-                    placeholder="John Doe"
-                    className="input input-bordered input-lg w-full rounded-2xl border-transparent bg-base-200/50 font-medium transition-all focus:input-primary focus:bg-base-100"
-                    required
-                  />
-                </div>
-                <div className="form-control">
-                  <label className="label"><span className="label-text font-bold">Email Address</span></label>
-                  <input
-                    type="email"
-                    name="email"
-                    placeholder="john@example.com"
-                    className="input input-bordered input-lg w-full rounded-2xl border-transparent bg-base-200/50 font-medium transition-all focus:input-primary focus:bg-base-100"
-                    required
-                  />
-                </div>
+      <div className="relative z-10 mx-auto w-full max-w-xl">
+        <Fade triggerOnce>
+          <title>CleanCity - Register</title>
+          <div className="w-full overflow-hidden rounded-[2rem] border border-base-300/80 bg-base-100/95 shadow-2xl backdrop-blur-sm sm:rounded-3xl">
+            <div className="p-5 sm:p-8 md:p-12">
+              <div className="mb-8 text-center sm:mb-10">
+                <Link to="/" className="mb-4 inline-flex items-center gap-2 text-2xl font-bold sm:text-3xl">
+                  <span className="rounded-lg bg-primary px-2 py-1 text-primary-content">Clean</span>
+                  <span className="text-secondary">City</span>
+                </Link>
+                <h2 className="text-2xl font-black text-secondary sm:text-3xl">Create Account</h2>
+                <p className="mt-2 text-sm text-base-content/60 sm:text-base">
+                  Join our community and start making a difference.
+                </p>
               </div>
 
-              {/* Profile Photo Upload */}
-              <div className="form-control">
-                <label className="label"><span className="label-text font-bold">Profile Photo</span></label>
-                <div
-                  className="group relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-base-300 bg-base-200/30 p-6 transition-all hover:border-primary hover:bg-primary/5"
-                  onClick={() => document.getElementById("avatar-upload")?.click()}
-                >
-                  {previewUrl ? (
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="relative h-24 w-24 overflow-hidden rounded-full ring-4 ring-primary/20">
-                        <img
-                          src={previewUrl}
-                          alt="Preview"
-                          className="h-full w-full object-cover"
-                        />
+              <form onSubmit={handleSignUp} className="space-y-4 sm:space-y-5">
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                  <div className="form-control">
+                    <label className="label"><span className="label-text font-bold">Full Name</span></label>
+                    <input
+                      type="text"
+                      name="name"
+                      placeholder="John Doe"
+                      className="input input-bordered w-full rounded-2xl border-transparent bg-base-200/50 font-medium transition-all focus:input-primary focus:bg-base-100 sm:input-lg"
+                      required
+                    />
+                  </div>
+                  <div className="form-control">
+                    <label className="label"><span className="label-text font-bold">Email Address</span></label>
+                    <input
+                      type="email"
+                      name="email"
+                      placeholder="john@example.com"
+                      className="input input-bordered w-full rounded-2xl border-transparent bg-base-200/50 font-medium transition-all focus:input-primary focus:bg-base-100 sm:input-lg"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Profile Photo Upload */}
+                <div className="form-control">
+                  <label className="label"><span className="label-text font-bold">Profile Photo</span></label>
+                  <div
+                    className="group relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-base-300 bg-base-200/30 p-4 transition-all hover:border-primary hover:bg-primary/5 sm:p-6"
+                    onClick={() => document.getElementById("avatar-upload")?.click()}
+                  >
+                    {previewUrl ? (
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="relative h-24 w-24 overflow-hidden rounded-full ring-4 ring-primary/20">
+                          <img
+                            src={previewUrl}
+                            alt="Preview"
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                        <p className="text-sm font-medium text-base-content/70">
+                          {selectedImageFile?.name}
+                        </p>
+                        <p className="text-xs text-primary">Click to change</p>
                       </div>
-                      <p className="text-sm font-medium text-base-content/70">
-                        {selectedImageFile?.name}
-                      </p>
-                      <p className="text-xs text-primary">Click to change</p>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center gap-2 text-base-content/50">
-                      <FiUploadCloud className="h-10 w-10 transition-transform group-hover:scale-110 group-hover:text-primary" />
-                      <p className="text-sm font-semibold">Click to upload your photo</p>
-                      <p className="text-xs">PNG, JPG, WEBP up to 5MB</p>
-                    </div>
-                  )}
-                  <input
-                    id="avatar-upload"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleImageChange}
-                  />
+                    ) : (
+                      <div className="flex flex-col items-center gap-2 text-base-content/50">
+                        <FiUploadCloud className="h-10 w-10 transition-transform group-hover:scale-110 group-hover:text-primary" />
+                        <p className="text-sm font-semibold">Click to upload your photo</p>
+                        <p className="text-xs">PNG, JPG, WEBP up to 5MB</p>
+                      </div>
+                    )}
+                    <input
+                      id="avatar-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageChange}
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <div className="form-control relative">
-                <label className="label"><span className="label-text font-bold">Password</span></label>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  placeholder="••••••••"
-                  className="input input-bordered input-lg w-full rounded-2xl border-transparent bg-base-200/50 font-medium transition-all focus:input-primary focus:bg-base-100"
-                  required
-                />
+                <div className="form-control relative">
+                  <label className="label"><span className="label-text font-bold">Password</span></label>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    placeholder="••••••••"
+                    className="input input-bordered w-full rounded-2xl border-transparent bg-base-200/50 pr-12 font-medium transition-all focus:input-primary focus:bg-base-100 sm:input-lg"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute bottom-3 right-4 cursor-pointer text-gray-500 transition-colors hover:text-primary sm:bottom-4 sm:right-5"
+                  >
+                    {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+                  </button>
+                </div>
+
                 <button
-                  type="button"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute bottom-4 right-5 cursor-pointer text-gray-500 transition-colors hover:text-primary"
+                  type="submit"
+                  disabled={isUploading}
+                  className="btn btn-primary min-h-13 w-full rounded-2xl font-bold tracking-tight shadow-xl shadow-primary/20 disabled:opacity-60 sm:btn-lg"
                 >
-                  {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+                  {isUploading ? (
+                    <span className="flex items-center gap-2">
+                      <span className="loading loading-spinner loading-sm"></span>
+                      Uploading & Creating Account...
+                    </span>
+                  ) : (
+                    "Create Account"
+                  )}
                 </button>
+              </form>
+
+              <div className="divider my-6 text-[10px] font-bold uppercase tracking-widest text-base-content/40 sm:my-8 sm:text-xs">
+                Or register with
               </div>
 
               <button
-                type="submit"
-                disabled={isUploading}
-                className="btn btn-primary btn-lg w-full rounded-2xl font-bold tracking-tight shadow-xl shadow-primary/20 disabled:opacity-60"
+                onClick={handleGoogleSignIn}
+                className="btn btn-outline group min-h-13 w-full gap-3 rounded-2xl border-base-300 transition-all hover:bg-base-200 hover:text-base-content sm:btn-lg"
               >
-                {isUploading ? (
-                  <span className="flex items-center gap-2">
-                    <span className="loading loading-spinner loading-sm"></span>
-                    Uploading & Creating Account...
-                  </span>
-                ) : (
-                  "Create Account"
-                )}
+                <svg className="h-5 w-5 transition-transform group-hover:scale-110" viewBox="0 0 24 24">
+                  <path fill="#EA4335" d="M5.266 9.765A7.077 7.077 0 0 1 12 4.909c1.69 0 3.218.6 4.418 1.582L19.91 3C17.782 1.145 15.055 0 12 0 7.27 0 3.198 2.698 1.24 6.65l4.026 3.115z" />
+                  <path fill="#FBBC05" d="M16.04 18.013c-1.09.303-2.246.46-3.44.46a7.077 7.077 0 0 1-7.334-4.71l-4.026 3.115C3.198 21.302 7.27 24 12 24c3.055 0 5.782-1.145 7.91-3l-3.87-2.987z" />
+                  <path fill="#4285F4" d="M19.91 21c2.13-1.855 3.59-4.59 3.59-9 0-.61-.05-1.21-.155-1.79H12v4.41h6.61a5.64 5.64 0 0 1-2.454 3.71l3.754 2.67z" />
+                  <path fill="#34A853" d="M5.266 14.235a7.077 7.077 0 0 1 0-4.47L1.24 6.65a11.96 11.96 0 0 0 0 10.7l4.026-3.115z" />
+                </svg>
+                Sign up with Google
               </button>
-            </form>
 
-            <div className="divider my-8 text-xs font-bold uppercase tracking-widest text-base-content/40">
-              Or register with
+              <p className="mt-8 text-center text-sm text-base-content/60 sm:mt-10 sm:text-base">
+                Already have an account?{" "}
+                <Link to="/login" className="font-bold text-primary hover:underline">
+                  Sign In
+                </Link>
+              </p>
             </div>
-
-            <button
-              onClick={handleGoogleSignIn}
-              className="btn btn-outline btn-lg group w-full gap-3 rounded-2xl border-base-300 transition-all hover:bg-base-200 hover:text-base-content"
-            >
-              <svg className="h-5 w-5 transition-transform group-hover:scale-110" viewBox="0 0 24 24">
-                <path fill="#EA4335" d="M5.266 9.765A7.077 7.077 0 0 1 12 4.909c1.69 0 3.218.6 4.418 1.582L19.91 3C17.782 1.145 15.055 0 12 0 7.27 0 3.198 2.698 1.24 6.65l4.026 3.115z" />
-                <path fill="#FBBC05" d="M16.04 18.013c-1.09.303-2.246.46-3.44.46a7.077 7.077 0 0 1-7.334-4.71l-4.026 3.115C3.198 21.302 7.27 24 12 24c3.055 0 5.782-1.145 7.91-3l-3.87-2.987z" />
-                <path fill="#4285F4" d="M19.91 21c2.13-1.855 3.59-4.59 3.59-9 0-.61-.05-1.21-.155-1.79H12v4.41h6.61a5.64 5.64 0 0 1-2.454 3.71l3.754 2.67z" />
-                <path fill="#34A853" d="M5.266 14.235a7.077 7.077 0 0 1 0-4.47L1.24 6.65a11.96 11.96 0 0 0 0 10.7l4.026-3.115z" />
-              </svg>
-              Sign up with Google
-            </button>
-
-            <p className="mt-10 text-center text-base-content/60">
-              Already have an account?{" "}
-              <Link to="/login" className="font-bold text-primary hover:underline">
-                Sign In
-              </Link>
-            </p>
           </div>
-        </div>
-      </Fade>
+        </Fade>
+      </div>
     </div>
   );
 };
