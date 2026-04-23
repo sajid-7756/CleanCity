@@ -1,4 +1,6 @@
 export interface Issue {
+  [x: string]: string;
+  rejectionNote: boolean;
   _id: string;
   title: string;
   category: string;

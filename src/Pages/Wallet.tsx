@@ -29,7 +29,7 @@ const Wallet = () => {
     }
 
     axiosSecure
-      .get<Issue[]>("/issues")
+      .get<Issue[]>(`/myIssue/?email=${email}&type=allRelated`)
       .then((res) => {
         setIssues(res.data);
       })

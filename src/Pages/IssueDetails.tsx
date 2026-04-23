@@ -1,5 +1,5 @@
-import { useContext, useEffect, useRef, useState } from "react";
-import type { ChangeEvent, FormEvent } from "react";
+import { useContext, useRef, useState } from "react";
+import type { ChangeEvent } from "react";
 import { useLoaderData, useNavigate } from "react-router";
 import {
   ArrowLeft,
@@ -8,25 +8,21 @@ import {
   CheckCircle2,
   DollarSign,
   Expand,
-  Home,
   ImageOff,
   MapPin,
-  Phone,
   ShieldCheck,
   Target,
   Upload,
-  Users,
   X,
   XCircle,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import Container from "../Components/Container";
 import Loading from "../Components/Loading";
-import useAxios from "../Hooks/useAxios";
 import useAxiosSecure from "../Hooks/useAxiosSecure";
 import { AuthContext } from "../Provider/AuthContext";
 import useRole from "../Hooks/useRole";
-import type { Contribution, Issue } from "../types/entities";
+import type { Issue } from "../types/entities";
 
 const formatDate = (value?: string) => {
   if (!value) {
@@ -53,14 +49,9 @@ const IssueDetails = () => {
   const issue = useLoaderData() as Issue;
   const navigate = useNavigate();
   const axiosSecure = useAxiosSecure();
-  const axiosInstance = useAxios();
 
-  const [showContributionModal, setShowContributionModal] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
   const [showProofModal, setShowProofModal] = useState(false);
-  const [contributions, setContributions] = useState<Contribution[]>([]);
-  const [refetch, setRefetch] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [proofImageFile, setProofImageFile] = useState<File | null>(null);
   const [proofPreviewUrl, setProofPreviewUrl] = useState<string | null>(null);
   const [isUploadingProof, setIsUploadingProof] = useState(false);
@@ -69,54 +60,7 @@ const IssueDetails = () => {
   const [role] = useRole();
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
-  useEffect(() => {
-    setLoading(true);
 
-    axiosInstance
-      .get<Contribution[]>(`/contributions/${issue?._id}`)
-      .then((response) => {
-        setContributions(response.data);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [axiosInstance, issue?._id, refetch]);
-
-  const sortedContributions = [...contributions].sort(
-    (a, b) => Number(b.amount) - Number(a.amount)
-  );
-
-  const totalContributed = sortedContributions.reduce(
-    (sum, contribution) => sum + Number(contribution.amount || 0),
-    0
-  );
-
-  const handleContributionSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    const formData = new FormData(event.currentTarget);
-    const newContribution = {
-      issueId: currentIssue._id,
-      amount: Number(formData.get("amount") ?? 0),
-      phone: String(formData.get("number") ?? ""),
-      address: String(formData.get("address") ?? ""),
-      date: String(formData.get("date") ?? ""),
-      additionalInfo: String(formData.get("additionalInfo") ?? ""),
-      name: authContext?.user?.displayName || "",
-      email: authContext?.user?.email || "",
-      image: authContext?.user?.photoURL || "",
-      category: currentIssue.category,
-      title: currentIssue.title,
-    };
-
-    axiosSecure.post("/contributions", newContribution).then((response) => {
-      if (response.data.insertedId) {
-        toast.success("Contribution successful. Thank you for helping.");
-        setShowContributionModal(false);
-        setRefetch((prev) => !prev);
-      }
-    });
-  };
 
   const handleProofImageChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] || null;
@@ -168,12 +112,15 @@ const IssueDetails = () => {
     }
   };
 
-  if (loading) {
-    return <Loading />;
-  }
+  // if (Loading) {
+  //   return <Loading />;
+  // }
 
   const user = authContext?.user;
-  const canSubmitProof = user && role !== "admin" && currentIssue.status === "ongoing";
+  // Any logged-in non-admin user can clean — but not the original reporter
+  const isReporter = user?.email === currentIssue.email;
+  const canSubmitProof =
+    user && role !== "admin" && !isReporter && currentIssue.status === "ongoing";
   const canManageProof =
     user &&
     role !== "admin" &&
@@ -256,13 +203,6 @@ const IssueDetails = () => {
                   <p className="font-bold text-secondary">{formatDate(issue.date)}</p>
                 </div>
 
-                <div className="rounded-3xl border border-base-300 bg-base-200/60 p-4">
-                  <div className="mb-2 flex items-center gap-2 text-sm font-bold text-secondary/60">
-                    <Users size={16} className="text-primary" />
-                    Contributors
-                  </div>
-                  <p className="font-bold text-secondary">{sortedContributions.length}</p>
-                </div>
 
                 <div className="rounded-3xl border border-base-300 bg-base-200/60 p-4">
                   <div className="mb-2 flex items-center gap-2 text-sm font-bold text-secondary/60">
@@ -276,40 +216,35 @@ const IssueDetails = () => {
 
             <aside className="space-y-4 rounded-4xl border border-base-300 bg-linear-to-br from-primary to-emerald-500 p-6 text-primary-content shadow-xl">
               <p className="text-xs font-black uppercase tracking-[0.25em] text-primary-content/70">
-                Support This Report
+                Reward
               </p>
-              <h2 className="mt-3 text-2xl font-black">Help move this issue forward</h2>
+              <h2 className="mt-3 text-2xl font-black">৳{currentIssue.amount || 0} for cleaning this issue</h2>
               <p className="mt-3 text-sm leading-6 text-primary-content/80">
-                Residents can contribute funds, supplies, or pickup support. A simple,
-                clear report helps the community respond faster.
+                Clean the area and submit a photo as proof. Once an admin approves your submission, the reward is yours.
               </p>
-
-              <div className="mt-6 grid gap-3 rounded-3xl bg-white/10 p-4 backdrop-blur-sm">
-                <div className="flex items-center justify-between text-sm font-bold">
-                  <span className="text-primary-content/70">Raised so far</span>
-                  <span>৳{totalContributed}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm font-bold">
-                  <span className="text-primary-content/70">Cleaner reward</span>
-                  <span>৳{currentIssue.amount || 0}</span>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setShowContributionModal(true)}
-                className="btn mt-6 w-full rounded-2xl border-none bg-secondary text-white hover:bg-secondary/90"
-              >
-                Pledge Support
-              </button>
 
               {canSubmitProof && (
                 <button
                   onClick={() => setShowProofModal(true)}
-                  className="btn w-full rounded-2xl border-2 border-white/40 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20"
+                  className="btn mt-4 w-full rounded-2xl border-2 border-white/40 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20"
                 >
                   <ShieldCheck size={18} />
                   Submit Proof of Cleaning
                 </button>
+              )}
+
+              {/* Reporter cannot claim their own bounty */}
+              {user && isReporter && currentIssue.status === "ongoing" && (
+                <div className="mt-4 rounded-2xl border border-white/20 bg-white/10 p-3 text-center text-sm font-bold text-white/70">
+                  You reported this issue — another user can claim the reward by cleaning it.
+                </div>
+              )}
+
+              {/* Someone else already submitted proof */}
+              {currentIssue.status === "pending" && !canManageProof && (
+                <div className="mt-4 rounded-2xl border border-white/20 bg-white/10 p-3 text-center text-sm font-bold text-white/70">
+                  🧹 Someone is already working on this — awaiting admin review.
+                </div>
               )}
 
               {currentIssue.status === "pending" && (
@@ -343,7 +278,7 @@ const IssueDetails = () => {
       </section>
 
       <Container className="pt-8">
-        <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="grid gap-8">
           <section className="space-y-8">
             <div className="overflow-hidden rounded-4xl border border-base-300 bg-base-100 shadow-sm">
               <div className="flex items-center justify-between border-b border-base-300 px-5 py-4">
@@ -368,12 +303,12 @@ const IssueDetails = () => {
                 <button
                   type="button"
                   onClick={() => setShowImageModal(true)}
-                  className="block w-full bg-black"
+                  className="block w-full bg-base-200/60"
                 >
                   <img
                     src={issue.image}
                     alt={issue.title}
-                    className="h-[280px] w-full object-cover md:h-[480px]"
+                    className="max-h-[520px] w-full object-contain"
                   />
                 </button>
               ) : (
@@ -418,71 +353,18 @@ const IssueDetails = () => {
               </div>
             </div>
           </section>
-
-          <aside className="space-y-8">
-            <div className="rounded-4xl border border-base-300 bg-base-100 p-6 shadow-sm md:p-8">
-              <div className="mb-6 flex items-center gap-3">
-                <div className="rounded-2xl bg-primary/10 p-3 text-primary">
-                  <Users size={22} />
-                </div>
-                <div>
-                  <h2 className="text-xl font-black text-secondary">Contributors</h2>
-                  <p className="text-sm text-secondary/60">
-                    People currently supporting this issue.
-                  </p>
-                </div>
-              </div>
-
-              {sortedContributions.length === 0 ? (
-                <div className="rounded-3xl border border-dashed border-base-300 bg-base-200/40 px-5 py-10 text-center">
-                  <p className="text-lg font-bold text-secondary">No contributions yet</p>
-                  <p className="mt-2 text-sm text-secondary/60">
-                    Be the first person to support this cleanup effort.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {sortedContributions.map((contribution, index) => (
-                    <div
-                      key={contribution._id || `${contribution.email}-${index}`}
-                      className="flex items-center justify-between gap-3 rounded-3xl border border-base-300 bg-base-200/40 p-4"
-                    >
-                      <div className="flex min-w-0 items-center gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-black text-primary">
-                          {index + 1}
-                        </div>
-                        <div className="avatar">
-                          <div className="h-12 w-12 rounded-2xl bg-base-200">
-                            <img
-                              src={contribution.image || "https://i.ibb.co/CpHdF8h2/icons8-user.gif"}
-                              alt={contribution.name || "Contributor"}
-                            />
-                          </div>
-                        </div>
-                        <div className="min-w-0">
-                          <p className="truncate font-bold text-secondary">
-                            {contribution.name || "Anonymous supporter"}
-                          </p>
-                          <p className="text-xs text-secondary/55">
-                            {formatDate(contribution.date)}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-black text-primary">৳{contribution.amount}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </aside>
         </div>
       </Container>
 
       {showImageModal ? (
-        <div className="modal modal-open bg-black/80 p-4">
-          <div className="relative w-full max-w-6xl overflow-hidden rounded-4xl bg-black">
+        <div
+          className="modal modal-open bg-black/90 p-4"
+          onClick={() => setShowImageModal(false)}
+        >
+          <div
+            className="relative max-h-[92vh] max-w-5xl overflow-hidden rounded-3xl bg-black shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               onClick={() => setShowImageModal(false)}
               className="btn btn-circle btn-sm absolute right-4 top-4 z-10 border-none bg-white/15 text-white hover:bg-white/25"
@@ -492,7 +374,7 @@ const IssueDetails = () => {
             <img
               src={currentIssue.image}
               alt={currentIssue.title}
-              className="max-h-[85vh] w-full object-contain"
+              className="block max-h-[92vh] max-w-full object-contain"
             />
           </div>
         </div>
@@ -577,123 +459,10 @@ const IssueDetails = () => {
         </div>
       ) : null}
 
-      {showContributionModal ? (
-        <div className="modal modal-open backdrop-blur-sm">
-          <div className="modal-box w-full max-w-2xl rounded-4xl border border-base-300 bg-base-100 p-0 shadow-2xl">
-            <div className="relative bg-secondary px-6 py-7 text-white md:px-8">
-              <button
-                onClick={() => setShowContributionModal(false)}
-                className="btn btn-circle btn-sm btn-ghost absolute right-5 top-5 hover:bg-white/10"
-              >
-                <X size={18} />
-              </button>
-              <h2 className="text-3xl font-black">Support This Issue</h2>
-              <p className="mt-2 text-sm text-white/70">
-                Add your contribution details for "{issue.title}".
-              </p>
-            </div>
-
-            <form onSubmit={handleContributionSubmit} className="space-y-6 p-6 text-secondary md:p-8">
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="form-control md:col-span-2">
-                  <label className="label">
-                    <span className="label-text font-bold">Report Title</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="title"
-                    defaultValue={issue.title}
-                    readOnly
-                    className="input w-full rounded-2xl border-base-300 bg-base-200/50 font-semibold"
-                  />
-                </div>
-
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text font-bold">Your Pledge Amount ($)</span>
-                  </label>
-                  <div className="relative">
-                    <DollarSign
-                      className="absolute left-4 top-1/2 -translate-y-1/2 text-primary/50"
-                      size={18}
-                    />
-                    <input
-                      type="number"
-                      name="amount"
-                      defaultValue={issue.amount}
-                      className="input w-full rounded-2xl border-base-300 bg-base-200/50 pl-11"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text font-bold">Contact Number</span>
-                  </label>
-                  <div className="relative">
-                    <Phone
-                      className="absolute left-4 top-1/2 -translate-y-1/2 text-primary/50"
-                      size={18}
-                    />
-                    <input
-                      type="tel"
-                      name="number"
-                      placeholder="01XXX-XXXXXX"
-                      className="input w-full rounded-2xl border-base-300 bg-base-200/50 pl-11"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="form-control md:col-span-2">
-                  <label className="label">
-                    <span className="label-text font-bold">Pick-up Address / Location</span>
-                  </label>
-                  <div className="relative">
-                    <Home className="absolute left-4 top-5 text-primary/50" size={18} />
-                    <textarea
-                      name="address"
-                      placeholder="Where should the materials be picked up from?"
-                      className="textarea min-h-[110px] w-full rounded-2xl border-base-300 bg-base-200/50 pl-11"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="form-control md:col-span-2">
-                  <label className="label">
-                    <span className="label-text font-bold">Additional Notes</span>
-                  </label>
-                  <textarea
-                    name="additionalInfo"
-                    placeholder="Any extra instructions for the cleanup team?"
-                    className="textarea min-h-[110px] w-full rounded-2xl border-base-300 bg-base-200/50"
-                  />
-                </div>
-
-                <div className="hidden">
-                  <input
-                    type="text"
-                    name="date"
-                    defaultValue={new Date().toLocaleDateString()}
-                    readOnly
-                  />
-                </div>
-              </div>
-
-              <button type="submit" className="btn btn-primary w-full rounded-2xl">
-                Confirm Contribution
-                <CheckCircle2 size={18} />
-              </button>
-            </form>
-          </div>
-        </div>
-      ) : null}
 
       {showCancelConfirm && (
         <div className="modal modal-open backdrop-blur-sm">
-          <div className="modal-box w-full max-w-md rounded-[2rem] border border-base-300 bg-base-100 p-8 shadow-2xl">
+          <div className="modal-box w-full max-w-md rounded-4xl border border-base-300 bg-base-100 p-8 shadow-2xl">
             <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-error/10">
               <XCircle className="text-error" size={28} />
             </div>

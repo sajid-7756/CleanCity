@@ -8,8 +8,8 @@ import { useNavigate } from "react-router";
 import { AuthContext } from "../Provider/AuthContext";
 
 const instance: AxiosInstance = axios.create({
-  baseURL: "https://clean-city-server-omega.vercel.app",
-  // baseURL: "http://localhost:3000",
+  // baseURL: "https://clean-city-server-omega.vercel.app",
+  baseURL: "http://localhost:3000",
 });
 
 const useAxiosSecure = () => {

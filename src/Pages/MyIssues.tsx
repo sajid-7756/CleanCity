@@ -123,23 +123,87 @@ const MyIssues = () => {
 
         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
           <div>
-            <h1 className="text-4xl font-black tracking-tight text-secondary">
+            <h1 className="text-3xl font-black tracking-tight text-secondary sm:text-4xl">
               My Issues <span className="ml-2 text-primary/40">({myIssues.length})</span>
             </h1>
-            <p className="mt-2 font-medium text-base-content/60">
+            <p className="mt-2 text-sm font-medium text-base-content/60 sm:text-base">
               Track and manage the reports you've submitted.
             </p>
           </div>
           <Link
             to="/dashboard/add-issue"
-            className="btn btn-primary gap-2 rounded-2xl shadow-lg shadow-primary/20"
+            className="btn btn-primary w-full gap-2 rounded-2xl shadow-lg shadow-primary/20 sm:w-auto"
           >
             <PlusCircle size={20} />
             Report New Issue
           </Link>
         </div>
 
-        <div className="overflow-hidden rounded-[3rem] border border-base-200 bg-base-100 shadow-sm">
+        <div className="space-y-4 md:hidden">
+          {reversed.map((issue, index) => (
+            <div
+              key={issue._id}
+              className="rounded-3xl border border-base-200 bg-base-100 p-4 shadow-sm"
+            >
+              <div className="flex items-start gap-4">
+                <div className="avatar shrink-0">
+                  <div className="mask mask-squircle h-16 w-16 overflow-hidden bg-base-200 ring-2 ring-base-200 ring-offset-2">
+                    <img
+                      src={issue.image || "https://i.ibb.co/CpHdF8h2/icons8-user.gif"}
+                      alt={issue.title}
+                      className="object-cover"
+                    />
+                  </div>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-sm font-black text-base-content/30">#{index + 1}</p>
+                    <span
+                      className={`badge badge-sm border-none px-3 font-black uppercase tracking-widest ${
+                        issue.status?.toLowerCase() === "ongoing"
+                          ? "bg-warning/10 text-warning"
+                          : "bg-success/10 text-success"
+                      }`}
+                    >
+                      {issue.status}
+                    </span>
+                  </div>
+                  <h2 className="mt-1 line-clamp-2 text-lg font-black text-secondary">{issue.title}</h2>
+                  <p className="mt-2 text-sm font-medium text-base-content/50">{issue.location}</p>
+                </div>
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <span className="badge badge-lg rounded-xl border-secondary/10 bg-secondary/5 px-4 py-4 font-bold text-secondary">
+                  {issue.category}
+                </span>
+                <span className="text-lg font-black text-secondary">${issue.amount}</span>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => {
+                    setSelectedIssue(issue);
+                    issueModalRef.current?.showModal();
+                  }}
+                  className="btn btn-outline rounded-2xl border-primary/20 text-primary hover:border-primary hover:bg-primary/10"
+                  title="Update Issue"
+                >
+                  Update
+                </button>
+                <button
+                  onClick={() => handleDeleteIssue(issue._id)}
+                  className="btn btn-outline rounded-2xl border-error/20 text-error hover:border-error hover:bg-error/10"
+                  title="Delete Issue"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="hidden overflow-hidden rounded-[2rem] border border-base-200 bg-base-100 shadow-sm md:block xl:rounded-[3rem]">
           <div className="overflow-x-auto">
             <table className="table table-lg">
               <thead>
@@ -252,21 +316,21 @@ const MyIssues = () => {
         </div>
 
         <dialog ref={issueModalRef} className="modal modal-bottom backdrop-blur-sm sm:modal-middle">
-          <div className="modal-box max-w-2xl overflow-hidden rounded-[3rem] border border-base-300 bg-base-100 p-0 shadow-2xl">
-            <div className="relative bg-linear-to-r from-primary to-secondary p-8 text-white">
+          <div className="modal-box w-full max-w-2xl overflow-hidden rounded-[2rem] border border-base-300 bg-base-100 p-0 shadow-2xl sm:rounded-[3rem]">
+            <div className="relative bg-linear-to-r from-primary to-secondary p-5 text-white sm:p-8">
               <button
                 onClick={() => issueModalRef.current?.close()}
                 className="btn btn-circle btn-sm btn-ghost absolute right-4 top-4 hover:bg-white/10"
               >
                 ✕
               </button>
-              <h2 className="mb-1 text-3xl font-black">Update Report</h2>
+              <h2 className="mb-1 text-2xl font-black sm:text-3xl">Update Report</h2>
               <p className="text-xs font-bold uppercase tracking-widest opacity-70">
                 Editing ID: {selectedIssue?._id?.slice(-8)}
               </p>
             </div>
 
-            <form onSubmit={handleUpdateIssue} className="space-y-6 p-8 text-secondary md:p-12">
+            <form onSubmit={handleUpdateIssue} className="space-y-5 p-4 text-secondary sm:p-6 md:space-y-6 md:p-12">
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div className="form-control md:col-span-2">
                   <label className="label">
@@ -324,7 +388,7 @@ const MyIssues = () => {
 
                 <div className="form-control md:col-span-2">
                   <label className="label font-bold text-secondary/60">Progress Status</label>
-                  <div className="flex gap-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
                     <label
                       className={`flex flex-1 cursor-pointer items-center justify-center gap-3 rounded-2xl border-2 p-4 transition-all ${
                         selectedIssue.status === "ongoing"
@@ -364,7 +428,7 @@ const MyIssues = () => {
               <div className="pt-6">
                 <button
                   type="submit"
-                  className="btn btn-primary btn-lg w-full rounded-2xl font-black tracking-tight shadow-xl shadow-primary/20"
+                  className="btn btn-primary min-h-14 w-full rounded-2xl px-4 font-black tracking-tight shadow-xl shadow-primary/20 sm:btn-lg"
                 >
                   Update Issue Report
                 </button>

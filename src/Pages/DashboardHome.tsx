@@ -169,17 +169,18 @@ const DashboardHome = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        <div className="rounded-[3rem] border border-base-200 bg-base-100 p-8 shadow-sm lg:col-span-2">
-          <div className="mb-8 flex items-center justify-between">
+        {/* Bar chart card */}
+        <div className="rounded-[3rem] border border-base-200 bg-base-100 p-6 shadow-sm sm:p-8 lg:col-span-2">
+          <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
             <div>
-              <h3 className="text-2xl font-black text-secondary">
+              <h3 className="text-xl font-black text-secondary sm:text-2xl">
                 Community Performance
               </h3>
               <p className="text-xs font-bold uppercase tracking-widest text-base-content/40">
                 Yearly comparisons
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-4">
               <span className="flex items-center gap-2 text-xs font-bold">
                 <div className="h-3 w-3 rounded-full bg-primary" /> Issues
               </span>
@@ -188,11 +189,12 @@ const DashboardHome = () => {
               </span>
             </div>
           </div>
-          <div className="h-80 w-full">
+          {/* Responsive chart height */}
+          <div className="h-56 w-full sm:h-72 lg:h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={data}
-                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                margin={{ top: 10, right: 10, left: -10, bottom: 5 }}
               >
                 <CartesianGrid
                   strokeDasharray="3 3"
@@ -203,13 +205,14 @@ const DashboardHome = () => {
                   dataKey="name"
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: "#94A3B8", fontSize: 12, fontWeight: 600 }}
+                  tick={{ fill: "#94A3B8", fontSize: 11, fontWeight: 600 }}
                   dy={10}
                 />
                 <YAxis
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: "#94A3B8", fontSize: 12, fontWeight: 600 }}
+                  tick={{ fill: "#94A3B8", fontSize: 11, fontWeight: 600 }}
+                  width={30}
                 />
                 <Tooltip
                   cursor={{ fill: "#F1F5F9" }}
@@ -222,34 +225,35 @@ const DashboardHome = () => {
                 <Bar
                   dataKey="issues"
                   fill="oklch(65% 0.2 155)"
-                  radius={[10, 10, 0, 0]}
+                  radius={[8, 8, 0, 0]}
                 />
                 <Bar
                   dataKey="resolved"
                   fill="oklch(35% 0.05 240)"
-                  radius={[10, 10, 0, 0]}
+                  radius={[8, 8, 0, 0]}
                 />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="relative overflow-hidden rounded-[3rem] bg-secondary p-8 text-secondary-content shadow-xl">
+        {/* Pie / status card */}
+        <div className="relative overflow-hidden rounded-[3rem] bg-secondary p-6 text-secondary-content shadow-xl sm:p-8">
           <div className="relative z-10 flex h-full flex-col">
-            <h3 className="mb-2 text-2xl font-black">Issue Status</h3>
-            <p className="mb-8 text-xs font-bold uppercase tracking-widest opacity-60">
+            <h3 className="mb-1 text-xl font-black sm:text-2xl">Issue Status</h3>
+            <p className="mb-6 text-xs font-bold uppercase tracking-widest opacity-60">
               Today's snapshot
             </p>
 
-            <div className="h-60 min-h-60 flex-1">
+            <div className="h-52 min-h-[13rem] flex-1 sm:h-60">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={pieData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
+                    innerRadius={55}
+                    outerRadius={75}
                     paddingAngle={5}
                     dataKey="value"
                   >
@@ -265,7 +269,7 @@ const DashboardHome = () => {
               </ResponsiveContainer>
             </div>
 
-            <div className="mt-6 space-y-4">
+            <div className="mt-4 space-y-3">
               {pieData.map((item, index) => (
                 <div
                   key={item.name}
@@ -273,7 +277,7 @@ const DashboardHome = () => {
                 >
                   <div className="flex items-center gap-2">
                     <div
-                      className="h-3 w-3 rounded-full"
+                      className="h-3 w-3 shrink-0 rounded-full"
                       style={{ backgroundColor: COLORS[index] }}
                     />
                     <span className="font-bold opacity-80">{item.name}</span>

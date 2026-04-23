@@ -49,7 +49,7 @@ const Profile = () => {
               <div className="flex-1 space-y-4">
                 <div className="flex items-center gap-3">
                   <h1 className="text-4xl font-black text-secondary">{user?.displayName}</h1>
-                  <span className="badge badge-primary badge-lg gap-2 py-4 font-bold">
+                  <span className="badge badge-primary badge-md gap-2 py-4 font-bold">
                     <ShieldCheck size={16} />
                     Verified Member
                   </span>

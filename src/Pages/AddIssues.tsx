@@ -125,14 +125,14 @@ const AddIssue = () => {
 
   return (
     <Fade>
-      <Container className="bg-base-100 p-6 md:p-10">
+      <Container className="bg-base-100 px-4 py-5 sm:px-6 sm:py-6 md:p-10">
         <title>Add Issues</title>
 
-        <div className="mb-5 text-center">
-          <h2 className="text-3xl font-bold">
+        <div className="mb-5 text-center sm:mb-6">
+          <h2 className="text-2xl font-bold sm:text-3xl">
             Report a New <span className="text-primary">Issue</span>
           </h2>
-          <p className="mt-2">
+          <p className="mt-2 text-sm sm:text-base">
             Help keep your community clean and safe by reporting local problems.
           </p>
         </div>

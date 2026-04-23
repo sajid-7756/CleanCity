@@ -1,6 +1,7 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { Fade } from "react-awesome-reveal";
+import { Link, Navigate } from "react-router";
 import {
   Camera,
   CheckCircle2,
@@ -14,15 +15,15 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import Loading from "../Components/Loading";
-import Table from "../Components/Table";
+import useRole from "../Hooks/useRole";
 import useAxiosSecure from "../Hooks/useAxiosSecure";
 import { AuthContext } from "../Provider/AuthContext";
-import type { Contribution, Issue } from "../types/entities";
+import type { Issue } from "../types/entities";
 
 const MyContribution = () => {
   const axiosSecure = useAxiosSecure();
   const authContext = useContext(AuthContext);
-  const [myContribution, setMyContribution] = useState<Contribution[]>([]);
+  const [role, isRoleLoading] = useRole();
   const [myIssues, setMyIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -44,12 +45,9 @@ const MyContribution = () => {
       return;
     }
 
-    Promise.all([
-      axiosSecure.get<Contribution[]>(`/contributions/?email=${email}`),
-      axiosSecure.get<Issue[]>(`/myIssue/?email=${email}`),
-    ])
-      .then(([contribRes, issuesRes]) => {
-        setMyContribution(contribRes.data);
+    axiosSecure
+      .get<Issue[]>(`/myIssue/?email=${email}&type=allRelated`)
+      .then((issuesRes) => {
         setMyIssues(issuesRes.data);
       })
       .catch((err) => console.error(err))
@@ -145,10 +143,14 @@ const MyContribution = () => {
   const approvedCleanings = myIssues.filter(
     (i) => i.cleanedBy === email && i.status === "ended",
   );
+  const rejectedCleanings = myIssues.filter(
+    (i) => i.rejectedUser === email && i.status === "ongoing" && i.rejectionNote,
+  );
 
-  const totalReported = myIssues.length;
-  const totalProofsSubmitted = pendingProofs.length + approvedCleanings.length;
+  const totalReported = myIssues.filter((i) => i.email === email).length;
+  const totalProofsSubmitted = pendingProofs.length + approvedCleanings.length + rejectedCleanings.length;
   const solvedCount = approvedCleanings.length;
+  const hasContributionActivity = totalProofsSubmitted > 0;
 
   const stats = [
     {
@@ -191,8 +193,12 @@ const MyContribution = () => {
     },
   ];
 
-  if (loading) {
+  if (loading || isRoleLoading) {
     return <Loading />;
+  }
+
+  if (role === "admin") {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return (
@@ -203,23 +209,20 @@ const MyContribution = () => {
 
         {/* Header */}
         <div>
-          <h1 className="text-4xl font-black tracking-tight text-secondary">
-            My Contributions{" "}
-            <span className="ml-2 text-primary/40">
-              ({myContribution.length})
-            </span>
+          <h1 className="text-3xl font-black tracking-tight text-secondary sm:text-4xl">
+            My Contributions
           </h1>
-          <p className="mt-2 font-medium text-base-content/60">
+          <p className="mt-2 text-sm font-medium text-base-content/60 sm:text-base">
             Track your impact — issues you reported and cleanings you completed.
           </p>
         </div>
 
         {/* Stats strip */}
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
           {stats.map((stat) => (
             <div
               key={stat.label}
-              className={`group flex items-center gap-3 rounded-3xl border bg-base-100 px-5 py-4 shadow-sm transition-all hover:shadow-md ${stat.border}`}
+              className={`group flex items-center gap-3 rounded-3xl border bg-base-100 px-4 py-4 shadow-sm transition-all hover:shadow-md sm:px-5 ${stat.border}`}
             >
               <div
                 className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-transform group-hover:scale-110 ${stat.color}`}
@@ -238,8 +241,8 @@ const MyContribution = () => {
 
         {/* Progress bar */}
         {totalProofsSubmitted > 0 && (
-          <div className="rounded-3xl border border-base-200 bg-base-100 p-6 shadow-sm">
-            <div className="mb-3 flex items-center justify-between">
+          <div className="rounded-3xl border border-base-200 bg-base-100 p-5 shadow-sm sm:p-6">
+            <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm font-black text-secondary">
                 Cleaning Success Rate
               </p>
@@ -264,10 +267,42 @@ const MyContribution = () => {
           </div>
         )}
 
+        {!hasContributionActivity && (
+          <div className="relative overflow-hidden rounded-[2rem] border border-base-200 bg-base-100 p-6 shadow-sm sm:rounded-[3rem] sm:p-8">
+            <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-primary/10 blur-2xl" />
+            <div className="absolute -bottom-10 left-0 h-24 w-24 rounded-full bg-secondary/10 blur-2xl" />
+            <div className="relative">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                <Flame size={24} />
+              </div>
+              <h2 className="mt-4 text-2xl font-black text-secondary">
+                No contribution activity yet
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-base-content/60 sm:text-base">
+                Your cleaning journey will show up here once you submit proof for an issue you helped solve.
+                We&apos;ll track pending reviews, approved cleanings, and any feedback from admins in one place.
+              </p>
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                <Link to="/issues" className="btn btn-primary rounded-2xl">
+                  Explore Issues
+                </Link>
+                <Link to="/dashboard/my-issues" className="btn btn-outline rounded-2xl">
+                  View My Reports
+                </Link>
+              </div>
+              {totalReported === 0 && (
+                <p className="mt-4 text-xs font-bold uppercase tracking-widest text-base-content/40">
+                  Tip: start by reporting a local issue or helping clean an active one.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Pending proof submissions */}
         {pendingProofs.length > 0 && (
-          <div className="rounded-[3rem] border border-info/30 bg-base-100 p-8 shadow-sm">
-            <div className="mb-6 flex items-center gap-3">
+          <div className="rounded-[2rem] border border-info/30 bg-base-100 p-5 shadow-sm sm:rounded-[3rem] sm:p-8">
+            <div className="mb-6 flex items-start gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-info/10">
                 <Clock size={20} className="text-info" />
               </div>
@@ -313,7 +348,7 @@ const MyContribution = () => {
                   </div>
 
                   {/* Badge + reward */}
-                  <div className="shrink-0 text-right">
+                  <div className="shrink-0 text-left sm:text-right">
                     <span className="badge badge-info badge-sm font-bold">
                       ⏳ pending
                     </span>
@@ -323,7 +358,7 @@ const MyContribution = () => {
                   </div>
 
                   {/* Action buttons */}
-                  <div className="flex shrink-0 gap-2">
+                  <div className="grid shrink-0 grid-cols-1 gap-2 sm:flex">
                     <button
                       onClick={() => setUpdatingIssue(issue)}
                       className="btn btn-xs btn-outline btn-info gap-1 rounded-xl"
@@ -345,10 +380,62 @@ const MyContribution = () => {
           </div>
         )}
 
+        {/* Rejected cleanings */}
+        {rejectedCleanings.length > 0 && (
+          <div className="rounded-[2rem] border border-error/30 bg-base-100 p-5 shadow-sm sm:rounded-[3rem] sm:p-8">
+            <div className="mb-6 flex items-start gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-error/10">
+                <XCircle size={20} className="text-error" />
+              </div>
+              <div>
+                <h2 className="text-xl font-black text-secondary">
+                  Rejected Proofs
+                </h2>
+                <p className="text-xs font-bold text-base-content/40">
+                  Your submitted proofs were denied by an admin
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {rejectedCleanings.map((issue) => (
+                <div
+                  key={issue._id}
+                  className="flex flex-col gap-4 rounded-2xl border border-error/20 bg-error/5 p-4 sm:flex-row sm:items-center"
+                >
+                  <div className="h-14 w-14 shrink-0 overflow-hidden rounded-2xl border border-base-200 bg-base-200">
+                    <img
+                      src={issue.image}
+                      alt={issue.title}
+                      className="h-full w-full object-cover grayscale"
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-black text-secondary">
+                      {issue.title}
+                    </p>
+                    <div className="mt-1 flex items-start gap-1">
+                      <span className="mt-0.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-error" />
+                      <p className="text-xs font-bold text-error/80">
+                        Admin Note: <span className="font-normal text-base-content/60">{issue.rejectionNote}</span>
+                      </p>
+                    </div>
+                  </div>
+                  <div className="shrink-0 text-left sm:text-right">
+                    <span className="badge badge-error badge-sm font-bold">
+                      ❌ denied
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Approved cleanings */}
         {approvedCleanings.length > 0 && (
-          <div className="rounded-[3rem] border border-success/30 bg-base-100 p-8 shadow-sm">
-            <div className="mb-6 flex items-center gap-3">
+          <div className="rounded-[2rem] border border-success/30 bg-base-100 p-5 shadow-sm sm:rounded-[3rem] sm:p-8">
+            <div className="mb-6 flex items-start gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-success/10">
                 <CheckCircle2 size={20} className="text-success" />
               </div>
@@ -366,7 +453,7 @@ const MyContribution = () => {
               {approvedCleanings.map((issue) => (
                 <div
                   key={issue._id}
-                  className="flex items-center gap-4 rounded-2xl border border-success/20 bg-success/5 p-4"
+                  className="flex flex-col gap-4 rounded-2xl border border-success/20 bg-success/5 p-4 sm:flex-row sm:items-center"
                 >
                   <div className="h-14 w-14 shrink-0 overflow-hidden rounded-2xl border border-base-200 bg-base-200">
                     {issue.proofImage ? (
@@ -391,7 +478,7 @@ const MyContribution = () => {
                       {issue.location}
                     </p>
                   </div>
-                  <div className="shrink-0 text-right">
+                  <div className="shrink-0 text-left sm:text-right">
                     <span className="badge badge-success badge-sm font-bold">
                       ✅ approved
                     </span>
@@ -405,16 +492,6 @@ const MyContribution = () => {
           </div>
         )}
 
-        {/* Pledge contributions table */}
-        <div className="min-h-[300px] rounded-[3rem] border border-base-200 bg-base-100 p-8 shadow-sm">
-          <h2 className="mb-6 text-xl font-black text-secondary">
-            Pledge / Fund Contributions
-            <span className="ml-2 text-primary/40">
-              ({myContribution.length})
-            </span>
-          </h2>
-          <Table myContribution={myContribution} />
-        </div>
       </div>
     </Fade>
 
@@ -422,20 +499,20 @@ const MyContribution = () => {
       {updatingIssue && (
         <div className="modal modal-open backdrop-blur-sm">
           <div className="modal-box w-full max-w-lg rounded-[2rem] border border-base-300 bg-base-100 p-0 shadow-2xl">
-            <div className="relative bg-secondary px-6 py-6 text-white">
+            <div className="relative bg-secondary px-5 py-5 text-white sm:px-6 sm:py-6">
               <button
                 onClick={closeUpdateModal}
                 className="btn btn-circle btn-sm btn-ghost absolute right-5 top-5 hover:bg-white/10"
               >
                 <X size={18} />
               </button>
-              <h2 className="text-2xl font-black">Update Proof Photo</h2>
+              <h2 className="text-xl font-black sm:text-2xl">Update Proof Photo</h2>
               <p className="mt-1 truncate text-sm text-white/70">
                 {updatingIssue.title}
               </p>
             </div>
 
-            <div className="space-y-5 p-6 md:p-8">
+            <div className="space-y-5 p-4 sm:p-6 md:p-8">
               {/* Current proof */}
               {updatingIssue.proofImage && (
                 <div>
@@ -482,7 +559,7 @@ const MyContribution = () => {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
                 <button
                   onClick={closeUpdateModal}
                   className="btn btn-outline w-full rounded-2xl"
@@ -505,7 +582,7 @@ const MyContribution = () => {
       {/* ── Cancel Submission Modal ── */}
       {cancellingIssue && (
         <div className="modal modal-open backdrop-blur-sm">
-          <div className="modal-box w-full max-w-md rounded-[2rem] border border-base-300 bg-base-100 p-8 shadow-2xl">
+          <div className="modal-box w-full max-w-md rounded-[2rem] border border-base-300 bg-base-100 p-5 shadow-2xl sm:p-8">
             <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-error/10">
               <XCircle className="text-error" size={28} />
             </div>
@@ -520,7 +597,7 @@ const MyContribution = () => {
               and set the issue back to <strong>ongoing</strong>. You can submit
               proof again later.
             </p>
-            <div className="mt-8 grid grid-cols-2 gap-4">
+            <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
               <button
                 onClick={() => setCancellingIssue(null)}
                 className="btn btn-outline w-full rounded-2xl"

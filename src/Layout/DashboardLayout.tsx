@@ -73,11 +73,15 @@ const DashboardLayout = () => {
             path: "/dashboard/admin-contributions",
           },
         ]),
-    {
-      icon: <HandHeart size={20} />,
-      label: "My Contribution",
-      path: "/dashboard/my-contribution",
-    },
+    ...(role !== "admin"
+      ? [
+          {
+            icon: <HandHeart size={20} />,
+            label: "My Contribution",
+            path: "/dashboard/my-contribution",
+          },
+        ]
+      : []),
     ...(role !== "admin"
       ? [
           {

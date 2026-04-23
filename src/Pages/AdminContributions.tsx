@@ -132,11 +132,12 @@ const AdminContributions = () => {
         proofImage: "",
         cleanedBy: "",
         rejectionNote: rejectionNote.trim() || undefined,
+        rejectedUser: issue.cleanedBy,
       });
       setIssues(
         issues.map((i) =>
           i._id === issue._id
-            ? { ...i, status: "ongoing", proofImage: "", cleanedBy: "" }
+            ? { ...i, status: "ongoing", proofImage: "", cleanedBy: "", rejectedUser: issue.cleanedBy, rejectionNote: rejectionNote.trim() || undefined }
             : i,
         ),
       );
