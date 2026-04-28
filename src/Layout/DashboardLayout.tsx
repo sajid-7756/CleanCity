@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import { Link, NavLink, Outlet, useNavigate } from "react-router";
 import {
@@ -8,6 +8,7 @@ import {
   ListTodo,
   LogOut,
   Menu,
+  MessageSquare,
   PlusCircle,
   UserCircle,
   Wallet,
@@ -16,12 +17,14 @@ import {
 import toast from "react-hot-toast";
 import { AuthContext } from "../Provider/AuthContext";
 import useRole from "../Hooks/useRole";
+import useAxiosSecure from "../Hooks/useAxiosSecure";
 
 interface MenuItem {
   icon: ReactNode;
   label: string;
   path: string;
   end?: boolean;
+  badge?: number;
 }
 
 const DashboardLayout = () => {
@@ -41,6 +44,21 @@ const DashboardLayout = () => {
   };
 
   const [role, isRoleLoading] = useRole();
+  const axiosSecure = useAxiosSecure();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (role !== "admin") return;
+    axiosSecure
+      .get("/messages")
+      .then((res) => {
+        const count = res.data.filter(
+          (m: { status: string }) => m.status === "unread"
+        ).length;
+        setUnreadCount(count);
+      })
+      .catch(() => {/* silent */});
+  }, [role, axiosSecure]);
 
   const menuItems: MenuItem[] = [
     {
@@ -73,6 +91,16 @@ const DashboardLayout = () => {
             path: "/dashboard/admin-contributions",
           },
         ]),
+    ...(role === "admin"
+      ? [
+          {
+            icon: <MessageSquare size={20} />,
+            label: "Messages",
+            path: "/dashboard/messages",
+            badge: unreadCount > 0 ? unreadCount : undefined,
+          },
+        ]
+      : []),
     ...(role !== "admin"
       ? [
           {
@@ -154,12 +182,19 @@ const DashboardLayout = () => {
                 {item.icon}
                 <span className="text-sm">{item.label}</span>
               </div>
-              <ChevronRight
-                size={14}
-                className={`transition-opacity group-hover:opacity-100 ${
-                  item.end ? "hidden" : "opacity-0"
-                }`}
-              />
+              <div className="flex items-center gap-1">
+                {item.badge !== undefined && (
+                  <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-black text-primary-content">
+                    {item.badge}
+                  </span>
+                )}
+                <ChevronRight
+                  size={14}
+                  className={`transition-opacity group-hover:opacity-100 ${
+                    item.end ? "hidden" : "opacity-0"
+                  }`}
+                />
+              </div>
             </NavLink>
           ))}
         </nav>

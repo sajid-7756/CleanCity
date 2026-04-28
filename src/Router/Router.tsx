@@ -16,6 +16,7 @@ import Profile from "../Pages/Profile";
 import DashboardLayout from "../Layout/DashboardLayout";
 import DashboardHome from "../Pages/DashboardHome";
 import AdminContributions from "../Pages/AdminContributions";
+import AdminMessages from "../Pages/AdminMessages";
 import Wallet from "../Pages/Wallet";
 
 interface IssueLoaderParams {
@@ -76,6 +77,10 @@ const router = createBrowserRouter([
           {
             path: "admin-contributions",
             element: <AdminContributions />,
+          },
+          {
+            path: "messages",
+            element: <AdminMessages />,
           },
           {
             path: "wallet",
